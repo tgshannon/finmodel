@@ -17,20 +17,18 @@ app.use(express.json());
 app.post('/ticker-data', async (req, res) => {
   const { ticker } = req.body;
   try {
-    const response = await axios.get(
+    const response1 = await axios.get(
 	`https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${apikey}`);
 
-    if (response.data && response.data.length > 0) {
-      const data = response.data[0];
-      res.json({
-        company: data.name,
-        symbol: data.symbol,
-        price: data.price,
-        volume: data.volume,
-        price50: data.priceAvg50,
-        pe: data.pe,
-        // Add more fields as needed
-      });
+  const response2 = await axios.get(
+    `https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${apikey}`);
+  
+    if (response1.data && response2.data) {
+      const responseData = {
+        quoteData: response1.data[0],
+        profileData: response2.data[0],
+      };
+      res.json(responseData);
     } else {
       res.status(404).json({ message: `No data found for ticker symbol '${ticker}'` });
     }
