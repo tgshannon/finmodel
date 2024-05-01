@@ -12,6 +12,14 @@ const apikey  = process.env.FMP_API_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const shutdownHandler = (signal) => {
+  console.log(`Received ${signal}. Shutting down...`);
+  server.close(() => {
+    console.log('Server closed. Exiting process.');
+    process.exit(0);
+  });
+};
+
 app.use(express.json());
 
 app.post('/ticker-data', async (req, res) => {
@@ -20,10 +28,10 @@ app.post('/ticker-data', async (req, res) => {
     const response1 = await axios.get(
 	`https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${apikey}`);
 
-  const response2 = await axios.get(
+    const response2 = await axios.get(
     `https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${apikey}`);
   
-    if (response1.data && response2.data) {
+    if (response1.data.length!=0 && response1.data && response2.data) {
       const responseData = {
         quoteData: response1.data[0],
         profileData: response2.data[0],
@@ -68,7 +76,21 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
 
+// Listen for SIGINT (Ctrl+C) signal
+process.on('SIGINT', () => {
+  shutdownHandler('SIGINT');
+});
+
+// Listen for SIGTERM signal (e.g., when process manager requests shutdown)
+process.on('SIGTERM', () => {
+  shutdownHandler('SIGTERM');
+});
+
+// Listen for SIGUSR1 signal (if you want to handle custom signals)
+process.on('SIGUSR1', () => {
+  //shutdownHandler('SIGUSR1');  pass on to attach Debug
+});
